@@ -33,7 +33,7 @@ public:
 			cv.notify_one();
 		}
 
-		if (current_buffer.size() + msg.size() >= 1024 * 1024) {
+		if (current_buffer.size() + msg.size() >= 1024 * 1024) {//如果发现当前+要进入的大于了额定内存，暂放入next_buffer中
 			next_buffer.insert(next_buffer.end(), msg.begin(), msg.end());
 			next_buffer.push_back('\n');
 			cv.notify_one();
@@ -52,7 +52,7 @@ private:
 			return;
 		}
 		
-		std::vector<char>write_buffer;
+		std::vector<char>write_buffer;//要写入磁盘的暂存区
 		while (_running) {
 
 			{
@@ -60,12 +60,12 @@ private:
 
 				if (current_buffer.empty()) {
 					cv.wait_for(lock, std::chrono::seconds(3), [this]() {
-						return !_running || !current_buffer.empty(); });
+						return !_running || !current_buffer.empty(); });//等待有数据
 				}
 
 				if (!_running && current_buffer.empty() && next_buffer.empty()) break;
 
-				if (next_buffer.empty()) {
+				if (next_buffer.empty()) {//对应append的两种情况
 					next_buffer.swap(current_buffer);
 					write_buffer.swap(next_buffer);
 				}
@@ -83,7 +83,7 @@ private:
 			}
 
 		}
-		file.close();
+		file.close();//关闭
 	}
 
 private:
@@ -92,7 +92,7 @@ private:
 
 	std::mutex _mutex;
 	std::thread log_thread;
-	std::condition_variable cv;
+	std::condition_variable cv;//条件变量
 	bool _running = true;
 };
 #pragma once
